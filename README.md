@@ -101,7 +101,7 @@ service. An example would be something like.
 
 ```bash
 sudo service ssh start
-``
+```
 ***___NOTE___*** that this must be ran with Supper User privaliges.
 
 There are also a couple of scripts in this reposatory that when ran will start or stop
