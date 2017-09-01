@@ -186,5 +186,17 @@ PING 23.67.121.35 (23.67.121.35) 56(84) bytes of data.
 rtt min/avg/max/mdev = 70.056/245.238/450.883/142.461 ms
 ```
 
-Using the `-c ___***NUMBER***___` option will ping to stop after ___***NUMBER***___ 
+Using the `-c NUMBER` option will ping to stop after ___***NUMBER***___ 
 packets sent.
+
+### A Couple of Ping Scripts
+There are two ping scripts in this reposatory and both do the same thing.  Bot are ment
+to loop through a series of IP addresses and print the ones that respond to ICMP requests.
+The first one [loop-ping.sh](loop-ping.sh) is a bash script that has the IP range hard
+coded into it.  In the future it will take the IP range as a command line argument.
+
+The second one [loop-ping.py](loop-ping.py) does the same as the last but is written in
+python.  It also has the IP range hard codded into it and will hopefully be fixed in the
+future.
+
+
