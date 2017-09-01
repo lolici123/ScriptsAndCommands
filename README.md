@@ -2,8 +2,8 @@
 
 ## General Purpose Programs
 
-### Find
-Find is a recursive search for file names. Its general use is such: `find path -name 
+### find
+`find` is a recursive search for file names. Its general use is such: `find path -name 
 PATTERN`.  An example would be something like this.
 
 ```bash
@@ -19,9 +19,9 @@ phillip:ScriptsAndCommands$ find ~/scripts -name "*.sh"
 /home/phillip/scripts/trafficStart.sh
 phillip:ScriptsAndCommands$ 
 ```
-Find has many command line optiions to choose from and they can all be found in `man find`
-but the most notible is the `-exec` option that allows you to run a command on each file
-that is returned.
+`find` has many command line optiions to choose from and they can all be found in `man
+find` but the most notible is the `-exec` option that allows you to run a command on each 
+file that is returned.
 
 ```bash
 phillip:ScriptsAndCommands$ find ~/scripts -name "*Stop.sh" -exec cat {} \;
@@ -36,16 +36,16 @@ phillip:ScriptsAndCommands$
 ```
 Notice that the `;` needed to be excaped - `\;`.
 
-### Locate
+### locate
 Reads of list of files form a database and prints the paths of the files that match the
 users querey.
 
-Firt you need to update the database with the `updatedb` command. This must be done as
+First you need to update the database with the `updatedb` command. This must be done as
 root. Next you can run `locate [OPTION]... PATTERN...` with `PATTERN` handling regular
 expressions. 
 
 ### Which
-Which will find the path of a given program. for example:
+`which` will find the path of a given program. for example:
 
 ```bash
 UNIX:~$ which cat
@@ -53,11 +53,11 @@ UNIX:~$ which cat
 UNIX:~$
 ```
 
-### Passwd
+### passwd
 `passwd` will allow you to change the password of the current user.
 
-### Netstat
-netstat  - Print network connections, routing tables, interface statistics, masquer‐ade 
+### netstat
+`netstat`  - Print network connections, routing tables, interface statistics, masquer‐ade 
 connections, and multicast memberships.  A usefull example of how to use `netstat would be
 
 ```bash
@@ -95,8 +95,8 @@ phillip:ScriptsAndCommands$
 This can be ran without Supper User privilages but you won't get as much usful
 information.
 
-### Service
-Service is a wrapper that runs an `/etc/init.d/SCRIPT` to start, stop, restart, etc. a
+### service
+`service` is a wrapper that runs an `/etc/init.d/SCRIPT` to start, stop, restart, etc. a
 service. An example would be something like.
 
 ```bash
@@ -108,3 +108,83 @@ There are also a couple of scripts in this reposatory that when ran will start o
 both the Apache2 and the MySQL servercies.  Those scripts are
 [serverStart.sh](serverStart.sh) and [serverStop.sh](serverStop.sh).
 
+### update-rc.d
+`update-rc.d` allows you to alter the boot precistance of services.  For example if you
+wanted to have your SSH service enabled on boot you could use:
+
+```bash
+update-rc.d ssh enable
+```
+This program installs and removes System-V style init script links so it is possible to
+change the percistance in a single state.  Valid states are [0|1|2|3|4|5|6]. Usage would
+be:
+
+```bash
+update-rc.d apache2 enable 2
+```
+
+### wget
+`wget` will download the target at the given url. For example:
+
+```bash
+phillip:scripts$ wget www.cisco.com
+--2017-09-01 14:09:43--  http://www.cisco.com/
+Resolving www.cisco.com (www.cisco.com)... 2600:1402:a:199::b33, 2600:1402:a:195::b33, 23.67.121.35
+Connecting to www.cisco.com (www.cisco.com)|2600:1402:a:199::b33|:80... connected.
+HTTP request sent, awaiting response... 301 Moved Permanently
+Location: https://www.cisco.com/ [following]
+--2017-09-01 14:09:43--  https://www.cisco.com/
+Connecting to www.cisco.com (www.cisco.com)|2600:1402:a:199::b33|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [text/html]
+Saving to: ‘index.html’
+
+index.html                  [ <=>                          ]  60.44K  --.-KB/s    in 0.09s   
+
+2017-09-01 14:09:44 (644 KB/s) - ‘index.html’ saved [61886]
+
+phillip:scripts$ ls
+index.html  ScriptsAndCommands
+phillip:scripts$ vim
+```
+If the target url is a website then the downloded file will be the index.html like shown
+above.  It can also be used to download .pdfs, .jpegs, etc.
+
+### host
+`host` is a DNS lookup utility. `host` is a simple utility for performing DNS lookups. It
+is normally used to convert names to IP addresses and vice versa. When no arguments or
+options are given, host prints a short summary of its command line arguments and options.
+A quick example woudl be:
+
+```bash
+phillip:scripts$ host www.cisco.com
+www.cisco.com is an alias for www.cisco.com.akadns.net.
+www.cisco.com.akadns.net is an alias for wwwds.cisco.com.edgekey.net.
+wwwds.cisco.com.edgekey.net is an alias for wwwds.cisco.com.edgekey.net.globalredir.akadns.net.
+wwwds.cisco.com.edgekey.net.globalredir.akadns.net is an alias for e2867.dsca.akamaiedge.net.
+e2867.dsca.akamaiedge.net has address 23.67.121.35
+e2867.dsca.akamaiedge.net has IPv6 address 2600:1402:a:199::b33
+e2867.dsca.akamaiedge.net has IPv6 address 2600:1402:a:195::b33
+phillip:scripts$
+```
+
+### ping
+`ping` sends ICMP ECHO_REQUESTs to the specified IP address.  Ping will then tell you if
+you receive a responce, how long it took, and the Time To Live (TTL). A quick example
+would be:
+
+```bash
+phillip:scripts$ ping 23.67.121.35
+PING 23.67.121.35 (23.67.121.35) 56(84) bytes of data.
+64 bytes from 23.67.121.35: icmp_seq=1 ttl=52 time=450 ms
+64 bytes from 23.67.121.35: icmp_seq=2 ttl=52 time=167 ms
+64 bytes from 23.67.121.35: icmp_seq=3 ttl=52 time=292 ms
+64 bytes from 23.67.121.35: icmp_seq=4 ttl=52 time=70.0 ms
+^C
+--- 23.67.121.35 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3001ms
+rtt min/avg/max/mdev = 70.056/245.238/450.883/142.461 ms
+```
+
+Using the `-c ___***NUMBER***___` option will ping to stop after ___***NUMBER***___ 
+packets sent.
