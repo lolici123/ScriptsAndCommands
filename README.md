@@ -200,3 +200,62 @@ python.  It also has the IP range hard codded into it and will hopefully be fixe
 future.
 
 
+
+
+
+
+
+## Active Info Gathering
+
+
+
+
+
+### SMB Enumeration
+
+The SMB netbios service lives on ports `139` and `445`.  You can scan servers looking for
+netbios services with nmap with something similar to this.
+
+```bash
+nmap -v -p 139,445 -oG smb.txt 10.11.1.1-254 --open
+```
+* `-v` tells nmap to be verbose
+* `-p` tells nmap to only check ports 139 and 445
+* `-oG` tells nmap to output the data in grepable format to file `smb.txt`
+* `10.111.1.1-254` is the IP range that will be scaned.
+* `--open` tells nmap to only report on IPs that it found with open netbios ports.
+
+A more specialized tool for scanning for netbios would be to use someting like `nbtscan`.
+
+```bash
+nbtscan -r 10.11.1.0/24
+```
+```bahs
+nbtscan 10.11.1.1-254
+```
+* `-r` tels nbtscan to use local port 137 for scans. Win95 boxes respond to this only.
+
+The ouput of this command might look something like this.
+```
+Doing NBT name scan for addresses from 10.11.1.1-254
+
+IP address       NetBIOS Name     Server    User             MAC address      
+------------------------------------------------------------------------------
+10.11.1.5        ALICE            <server>  ALICE            00:50:56:89:25:59
+10.11.1.24       PAYDAY           <server>  PAYDAY           00:00:00:00:00:00
+10.11.1.31       RALPH            <server>  USER67           00:50:56:89:17:75
+10.11.1.22       BARRY            <server>  BARRY            00:00:00:00:00:00
+10.11.1.115      TOPHAT           <server>  TOPHAT           00:00:00:00:00:00
+10.11.1.128      DJ               <server>  DJ               00:50:56:89:45:48
+10.11.1.73       GAMMA            <server>  <unknown>        00:50:56:89:21:c2
+10.11.1.136      SUFFERANCE       <server>  SUFFERANCE       00:00:00:00:00:00
+10.11.1.202      ORACLE           <server>  ORACLE           00:50:56:89:69:ce
+10.11.1.229      MAIL             <server>  MAIL             00:50:56:89:5d:07
+10.11.1.227      JD               <server>  JD               00:50:56:89:1b:3b
+10.11.1.145      HELPDESK         <server>  <unknown>        00:50:56:89:7e:40
+10.11.1.220      MASTER           <server>  <unknown>        00:50:56:89:31:e1
+10.11.1.221      SLAVE            <server>  <unknown>        00:50:56:89:34:54
+10.11.1.230      KEVIN            <server>  <unknown>        00:50:56:89:32:45
+10.11.1.218      OBSERVER         <server>  <unknown>        00:50:56:89:4b:13
+10.11.1.223      JEFF             <server>  <unknown>        00:50:56:89:03:d2
+```
