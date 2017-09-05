@@ -213,6 +213,7 @@ future.
 
 ### SMB Enumeration
 
+#### Scanning for the NetBIOS Service
 The SMB netbios service lives on ports `139` and `445`.  You can scan servers looking for
 netbios services with nmap with something similar to this.
 
@@ -259,3 +260,129 @@ IP address       NetBIOS Name     Server    User             MAC address
 10.11.1.218      OBSERVER         <server>  <unknown>        00:50:56:89:4b:13
 10.11.1.223      JEFF             <server>  <unknown>        00:50:56:89:03:d2
 ```
+
+#### Null Session Enumeration
+
+One tool you can use for null session enumeration is `rpcclient`
+
+```bash
+rpcclient -U "" ipa.ipa.ipa.ipa
+```
+* `-U ""` signs in with the user name of an empty string
+* `ipa.ipa.ipa.ipa`  IP address of the target server.
+
+Once loged in to the null session u can use commands such as
+
+* `srvinf0` Helps identify the OS version of machine.
+* `enumdomusers` Defines a list of user names on the server.
+* `getdompwinfo` Displays the SMB password policy.
+
+Many other can be found in `man rpcclient`
+
+Another usefull tool to use to enumerate null sessions is `enum4linux`
+```bash
+enum4linux -h
+```
+* `-h` Will display the help screen and give you all the options for `enum4linux`.
+```bash
+enum4linux -v ipa.ipa.ipa.ipa > text.txt
+```
+* `-v` Tells enum4linux to be verbose
+* `> text.txt` redirects output to the the file text.txt
+
+#### Nmap SMB NSE Scripts
+Another way to scan for smb servers is with the nmap scripts.  You can list all the
+scripts using
+```bash
+ls -Al /usr/share/nmap/scripts | grep "smb"
+-rw-r--r-- 1 root root 45163 Jun 17 20:04 smb-brute.nse
+-rw-r--r-- 1 root root  5282 Jun 17 20:04 smb-double-pulsar-backdoor.nse
+-rw-r--r-- 1 root root  4846 Jun 17 20:04 smb-enum-domains.nse
+-rw-r--r-- 1 root root  5931 Jun 17 20:04 smb-enum-groups.nse
+-rw-r--r-- 1 root root  8045 Jun 17 20:04 smb-enum-processes.nse
+-rw-r--r-- 1 root root 12057 Jun 17 20:04 smb-enum-sessions.nse
+-rw-r--r-- 1 root root  6923 Jun 17 20:04 smb-enum-shares.nse
+-rw-r--r-- 1 root root 12531 Jun 17 20:04 smb-enum-users.nse
+-rw-r--r-- 1 root root  1706 Jun 17 20:04 smb-flood.nse
+-rw-r--r-- 1 root root  7388 Jun 17 20:04 smb-ls.nse
+-rw-r--r-- 1 root root  8792 Jun 17 20:04 smb-mbenum.nse
+-rw-r--r-- 1 root root  8041 Jun 17 20:04 smb-os-discovery.nse
+-rw-r--r-- 1 root root  5083 Jun 17 20:04 smb-print-text.nse
+-rw-r--r-- 1 root root 63595 Jun 17 20:04 smb-psexec.nse
+-rw-r--r-- 1 root root  5190 Jun 17 20:04 smb-security-mode.nse
+-rw-r--r-- 1 root root  2424 Jun 17 20:04 smb-server-stats.nse
+-rw-r--r-- 1 root root 14150 Jun 17 20:04 smb-system-info.nse
+-rw-r--r-- 1 root root  1536 Jun 17 20:04 smbv2-enabled.nse
+-rw-r--r-- 1 root root  7586 Jun 17 20:04 smb-vuln-conficker.nse
+-rw-r--r-- 1 root root  6494 Jun 17 20:04 smb-vuln-cve2009-3103.nse
+-rw-r--r-- 1 root root 23153 Jun 17 20:04 smb-vuln-cve-2017-7494.nse
+-rw-r--r-- 1 root root  6618 Jun 17 20:04 smb-vuln-ms06-025.nse
+-rw-r--r-- 1 root root  5444 Jun 17 20:04 smb-vuln-ms07-029.nse
+-rw-r--r-- 1 root root  5778 Jun 17 20:04 smb-vuln-ms08-067.nse
+-rw-r--r-- 1 root root  5620 Jun 17 20:04 smb-vuln-ms10-054.nse
+-rw-r--r-- 1 root root  7322 Jun 17 20:04 smb-vuln-ms10-061.nse
+-rw-r--r-- 1 root root  6939 Jun 17 20:04 smb-vuln-ms17-010.nse
+-rw-r--r-- 1 root root  4522 Jun 17 20:04 smb-vuln-regsvc-dos.nse
+```
+
+If you wanted to enumerate all the users on a server using the SMB protocal you could use
+`nmap` with the script `smb-enum-users` script like so:
+
+```bash
+nmap -p 139,445 --script smb-enum-users ipa.ipa.ipa.ipa
+```
+* `-p` Tells nmap which ports to scan. In this case ports `139,445`.
+* `--script` Tells nmap you want to use the script `smb-enum-users`.
+* `ipa.ipa.ipa.ipa` would be the IP address.
+
+Another usefull script to use the nmap when targeting SMB is the `smb-os-discovery` which
+should be self explanatory
+
+```bash
+nmap -p 139,445 --script=smb-os-discovery ipa.ipa.ipa.ipa
+```
+or
+```bash
+nmap -p 139,445 --script smb-os-discovery ipa.ipa.ipa.ipa
+```
+Most of the time you will not know what the script does and may need help in understanding
+it. For that you will use the `-script-help` option.
+
+```bash
+root@kali:~# nmap -script-help smb-vuln-ms17-010.nse
+
+Starting Nmap 7.50 ( https://nmap.org ) at 2017-09-05 11:59 EDT
+
+smb-vuln-ms17-010
+Categories: vuln safe
+https://nmap.org/nsedoc/scripts/smb-vuln-ms17-010.html
+  Attempts to detect if a Microsoft SMBv1 server is vulnerable to a remote code
+   execution vulnerability (ms17-010). 
+
+  The script connects to the $IPC tree, executes a transaction on FID 0 and
+   checks if the error "STATUS_INSUFF_SERVER_RESOURCES" is returned to
+   determine if the target is not patched against ms17-010. Additionally it checks
+   for known error codes returned by patched systems.
+
+  Tested on Windows XP, 2003, 7, 8, 8.1, 10, 2008, 2012 and 2016.
+
+  References:
+  * https://technet.microsoft.com/en-us/library/security/ms17-010.aspx
+  * https://blogs.technet.microsoft.com/msrc/2017/05/12/customer-guidance-for-wannacrypt-attacks/
+  * https://msdn.microsoft.com/en-us/library/ee441489.aspx
+  * https://github.com/rapid7/metasploit-framework/blob/master/modules/auxiliary/scanner/smb/smb_ms17_010.rb 
+  * https://github.com/cldrn/nmap-nse-scripts/wiki/Notes-about-smb-vuln-ms17-010
+root@kali:~# 
+```
+Where previously you could run a single script `smb-check-vuln` to look for all the known
+vulnarabilities with the smb protocal, they have now been split into their own scripts.
+You can still achieve the same results by running.
+```bash
+nmap -p 139,445 --script vuln ipa.ipa.ipa.ipa
+```
+All of the vularability scripts have been groped into section named `vuln` so running
+`--script vuln` will run all of the vuln scripts (Not sure if it runs all the vuln
+scripts or just the smb-vuln scripts).
+
+
+#### SMTP Enumeration
