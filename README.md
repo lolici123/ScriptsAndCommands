@@ -385,4 +385,89 @@ All of the vularability scripts have been groped into section named `vuln` so ru
 scripts or just the smb-vuln scripts).
 
 
-#### SMTP Enumeration
+### SMTP Enumeration
+
+Mail servers running the SMTP protocal can sometimes be verbose and give an attacker
+information that can aid them in attacking the rest of the system.  A simple way to check
+for servers running the SMTP protocal (TCP port 25) would be to use `nmap`.
+```bash
+nmap -v -p 25 ipa.ipa.ipa.ipa-range --open -oG output.txt
+```
+* `-v` Be verbose
+* `-p` Scan port ?
+* `--open` Only report open ports
+* `-oG` Grepable output to file output.txt
+
+From here you can grep out of of the indipendent IPs with a command like.
+```bash
+grep "Host: " output.txt | cut -d " " -f 2 | sort -u > tempIPs.txt
+```
+Next netcat into each of these servers and try the `VRFY` command along with a user name
+to see if the server is vulerable to this type of command.  If you get a response then
+you can try and enumerate through a list of usernames you suspect are on that server.  If
+not then you disconnect and move on to the next IP.
+
+### SNMP Enumeration
+
+#### Scanning for SNMP
+The simplest way to scan for the SNMP protocal will again be `namp` but note that SNMP
+lives on UDP port 161.
+```bash
+nmap -sU --open -p 161 ip.ip.ip.ip-range -oG mega-snmp.txt
+```
+* `-sU` Tell nmap to use UDP
+* `--open` Only report open ports.
+* `-p` Scan ports 161
+* `-oG` Grepable output to file mega-snmp.txt
+* `ip.ip.ip.ip-range` Range of IP addresses to scan
+
+You can also use the tool `onesixtyone`.  Its best us create a list of community strings
+in a file that are used to enumerate the IP addressees.  for example:
+```bash
+root@kali:~# cat Research/comunity.txt 
+public
+private
+manager
+root@kali:~# 
+```
+You might also want to create a list of IP addresses for the tool to use. For example:
+```bash
+for ip in $(seq 1 254); do echo "10.11.1.$ip" > tempIP.txt; done
+```
+You can then run the tool which will check each of the IPs against the comunity strings
+you porvide it.
+```bash
+onesixtyone -c comunity.txt -i tempIP.txt
+```
+This will return a list of all the IPs that responded to one of the community strings
+along with the string that it responded to.
+
+#### Windows SNMP Enumeration Example
+MIB values correspond to specific Microsoft Windows SNMP parameters. A list of important
+ones are:
+| MIB Value | Parameter |
+|:---------:|:---------:|
+|1.3.6.1.2.1.25.1.6.0 | System Processes |
+|1.3.6.1.2.1.25.4.2.1.2 | Running Programs |
+|1.3.6.1.2.1.25.4.2.1.4 | Processes Path |
+|1.3.6.1.2.1.25.2.3.1.4 | Storage Units |
+|1.3.6.1.2.1.25.6.3.1.2 | Software Name |
+|1.3.6.1.4.1.77.1.2.25 | User Accounts |
+|1.3.6.1.2.1.6.13.1.3 | TCP Local Ports |
+
+You can use snmpwalk to explore these MIB trees:
+```bash
+snmpwalk -c public -v 1 ip.ip.ip.ip
+```
+* `-c` Use the community string `public`
+* `-v` describes the protocal version to use [1|2c|3]
+
+This will traverse the whole tree which is probable what you don't want.  Instead you can
+start from one of the mib values above in the table like so:
+```bash
+snmpwalk -c public -v 1 ip.ip.ip.ip 1.3.6.1.2.1.25.4.2.1.2
+```
+This will list all of the running processes on the system.
+
+## Vulnerability Scanning
+ 
