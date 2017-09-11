@@ -445,6 +445,7 @@ along with the string that it responded to.
 #### Windows SNMP Enumeration Example
 MIB values correspond to specific Microsoft Windows SNMP parameters. A list of important
 ones are:
+
 | MIB Value | Parameter |
 |:---------:|:---------:|
 | 1.3.6.1.2.1.25.1.6.0 | System Processes |
