@@ -914,4 +914,28 @@ dir c:\ /s /b | find "file.txt"
 * /b - does a basic printing.
 * find - forceces only printing matiches to the given string.
 
+Download registery
+```
+regedit /e full.reg
+```
+Can also download specific keys files like so
+```
+c:\winnt\regedit.exe /e winvnc3.reg "HKEY_LOCAL_MACHINE\SOFTWARE\ORL\WinVNC3"
+```
 
+Use VNC viewer
+```
+vncviewer
+```
+when the box pops up asking for the server type in the IP addressa and hit shift enter.
+If it ask you to hit ctrl+alt+del you can hit f8 and select that from the menue that pops
+up.
+
+
+## Usefull Reverse shell hacks
+
+Get bash like prompt and usability on a NetCat reverse shell on Linux
+
+```bash
+python -c 'import pty;pty.spawn("/bin/bash")'
+```
