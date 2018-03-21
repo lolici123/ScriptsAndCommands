@@ -984,3 +984,7 @@ If you get the error 'xterm-256color': unknown terminal type.
 export TERM=xterm
 ```
 
+Find all files with world writeable permissions and ignore links.
+```bash
+find . -perm -002 ! -type l -exec ls -l {} \;
+```
