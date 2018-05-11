@@ -878,9 +878,10 @@ allowed via sudo or if the SUID bit is set for it.
 
 * vi and vim - In the program hiting ESC then `:sh` will bring up a shell
 * less - Run less on a file then tyep `! /bin/bash` to get a shell
+* more - Same as less
 * Python and other scrypting engines - create your own shell.
    * Python - sudo python -c 'import pty;pty.spawn("/bin/bash")'
-
+* Anything that uses less or more as a pager - (systemctl status, man, etc
 
 ### Usefull Windows commands
 
