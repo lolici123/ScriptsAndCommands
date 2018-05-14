@@ -905,6 +905,10 @@ look for running processes
 tasklist
 ```
 
+kill running processs
+```
+taskkill /f /t /pid <pid>
+```
 
 Find a file on the system.
 ```
@@ -922,14 +926,6 @@ Can also download specific keys files like so
 ```
 c:\winnt\regedit.exe /e winvnc3.reg "HKEY_LOCAL_MACHINE\SOFTWARE\ORL\WinVNC3"
 ```
-
-Use VNC viewer
-```
-vncviewer
-```
-when the box pops up asking for the server type in the IP addressa and hit shift enter.
-If it ask you to hit ctrl+alt+del you can hit f8 and select that from the menue that pops
-up.
 
 
 ## Usefull Reverse shell hacks
@@ -984,3 +980,40 @@ If you get the error 'xterm-256color': unknown terminal type.
 export TERM=xterm
 ```
 
+Nmap scan that will complete in a timly manner.
+```bash
+nmap -vvvv -sV -p- -oA nmap-full-port-scan --max-retries=3 --max-scan-delay=20ms 10.11.8.24
+```
+
+Quick HTTP server
+```bash
+python -m SimpleHTTPServer
+```
+
+Copy a file to your clipboard
+```bash
+cat file.txt | xclip -selection c
+```
+
+quick launch Metasploit handler
+```bash
+service postgresql start
+msfconsole -q -x "use exploit/multi/handler; set payload <PAYLOAD USED>; set lhost <LOCAL IP>; set lport <LOCAL PORT>; run"
+```
+
+Use VNC viewer
+```
+vncviewer
+```
+when the box pops up asking for the server type in the IP addressa and hit shift enter.
+If it ask you to hit ctrl+alt+del you can hit f8 and select that from the menue that pops
+up.
+
+Quickly print all open ports from an nmap.gnmap file
+```bash
+cat nmap-scan.gnmap | grep -Eo "([0-9]+)/open" | grep -Eo "[0-9]+"
+```
+or
+```bash
+cat nmap-scan.gnmap | grep -Eo "([0-9]+)/open" | cut -d "/" -f 1
+```
